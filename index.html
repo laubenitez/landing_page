@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spa Deseo — Agendamiento de Citas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --pink-deep:#D63E6F;
+    --pink-mid:#F29BAB;
+    --pink-soft:#F2CED8;
+    --pink-pale:#F2E9EB;
+    --white:#ffffff;
+    --dark:#2a1420;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Poppins',sans-serif;
+    background:var(--pink-pale);
+    color:var(--dark);
+    overflow-x:hidden;
+    line-height:1.6;
+  }
+  h1,h2,h3{font-family:'Playfair Display',serif;font-weight:700}
+
+  /* ===== FONDO ANIMADO ===== */
+  .bg-blobs{
+    position:fixed;inset:0;z-index:-1;overflow:hidden;
+    background:linear-gradient(135deg,#F2E9EB 0%,#F2CED8 50%,#F2E9EB 100%);
+  }
+  .blob{
+    position:absolute;border-radius:50%;filter:blur(80px);opacity:.6;
+    animation:floatBlob 18s ease-in-out infinite;
+  }
+  .blob:nth-child(1){width:500px;height:500px;background:var(--pink-mid);top:-150px;left:-150px}
+  .blob:nth-child(2){width:400px;height:400px;background:var(--pink-soft);bottom:-100px;right:-100px;animation-delay:-6s}
+  .blob:nth-child(3){width:350px;height:350px;background:var(--pink-deep);opacity:.25;top:40%;left:50%;animation-delay:-12s}
+  @keyframes floatBlob{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(60px,-40px) scale(1.1)}
+    66%{transform:translate(-40px,60px) scale(.95)}
+  }
+
+  /* ===== NAVBAR ===== */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    padding:20px 60px;display:flex;justify-content:space-between;align-items:center;
+    backdrop-filter:blur(20px);background:rgba(242,233,235,.7);
+    border-bottom:1px solid rgba(214,62,111,.1);
+    transition:all .4s ease;
+  }
+  nav.scrolled{padding:12px 60px;background:rgba(242,233,235,.95);box-shadow:0 10px 40px rgba(214,62,111,.1)}
+  .logo{
+    font-family:'Playfair Display',serif;
+    font-size:2.2rem;
+    font-weight:900;
+    font-style:italic;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid),var(--pink-deep));
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    animation:shine 3s linear infinite;
+    text-shadow:2px 2px 4px rgba(214,62,111,0.2);
+  }
+  
+  @keyframes shine{
+    to{background-position:200% center}
+  }
+  
+  .nav-links{display:flex;gap:35px;list-style:none}
+  .nav-links a{
+    text-decoration:none;color:var(--dark);font-weight:500;font-size:.95rem;
+    position:relative;transition:color .3s;
+  }
+  .nav-links a::after{
+    content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;
+    background:var(--pink-deep);transition:width .3s;
+  }
+  .nav-links a:hover{color:var(--pink-deep)}
+  .nav-links a:hover::after{width:100%}
+  .btn-nav{
+    padding:10px 25px;background:var(--pink-deep);color:white;
+    border:none;border-radius:30px;font-weight:600;cursor:pointer;
+    box-shadow:0 10px 25px rgba(214,62,111,.35);transition:all .3s;
+  }
+  .btn-nav:hover{transform:translateY(-3px);box-shadow:0 15px 35px rgba(214,62,111,.5)}
+
+  /* ===== HERO ===== */
+  .hero{
+    min-height:100vh;padding:140px 60px 80px;
+    display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+    position:relative;perspective:2000px;overflow:hidden;
+  }
+  .hero-content{z-index:2}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 20px;background:rgba(255,255,255,.6);
+    border:1px solid var(--pink-soft);border-radius:30px;
+    font-size:.85rem;font-weight:500;color:var(--pink-deep);
+    backdrop-filter:blur(10px);margin-bottom:25px;
+    animation:fadeInUp .8s ease;
+  }
+  .badge::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--pink-deep);animation:pulse 1.5s infinite}
+  
+  .hero h1{
+    font-size:4rem;
+    line-height:1.1;
+    margin-bottom:25px;
+    color:var(--dark);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    cursor: default;
+  }
+  
+  .hero h1:hover{
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+  
+  .hero h1 span{
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    display:inline-block;
+    position:relative;
+  }
+  
+  .hero p{font-size:1.15rem;color:#6b4a5a;margin-bottom:35px;max-width:500px}
+  .hero-buttons{display:flex;gap:20px;flex-wrap:wrap}
+  .btn-primary{
+    padding:16px 35px;background:linear-gradient(135deg,var(--pink-deep),#e85a8a);
+    color:white;border:none;border-radius:50px;font-size:1rem;font-weight:600;
+    cursor:pointer;position:relative;overflow:hidden;
+    box-shadow:0 15px 40px rgba(214,62,111,.4);transition:all .4s;
+    transform-style:preserve-3d;
+  }
+  .btn-primary::before{
+    content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+    transition:left .6s;
+  }
+  .btn-primary:hover::before{left:100%}
+  .btn-primary:hover{transform:translateY(-5px) rotateX(10deg);box-shadow:0 25px 50px rgba(214,62,111,.5)}
+  .btn-secondary{
+    padding:16px 35px;background:rgba(255,255,255,.7);
+    border:2px solid var(--pink-soft);border-radius:50px;
+    font-size:1rem;font-weight:600;cursor:pointer;color:var(--pink-deep);
+    backdrop-filter:blur(10px);transition:all .4s;
+  }
+  .btn-secondary:hover{background:var(--pink-deep);color:white;border-color:var(--pink-deep);transform:translateY(-5px)}
+
+  /* ===== HERO 3D SCENE - ESMALTE CON PINCEL ===== */
+  .hero-visual{
+    position:relative;height:650px;
+    display:flex;justify-content:center;align-items:center;
+    perspective:2000px;transform-style:preserve-3d;
+  }
+  .hero-3d-container{
+    position:relative;width:100%;height:100%;
+    transform-style:preserve-3d;
+    transition:transform .1s ease-out;
+  }
+  
+  .polish-3d{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:400px;
+    height:550px;
+    transform-style:preserve-3d;
+    animation:polishFloat 6s ease-in-out infinite;
+  }
+  
+  .polish-splash{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:380px;
+    height:480px;
+    z-index:1;
+  }
+  
+  .splash{
+    position:absolute;
+    background:linear-gradient(135deg, var(--pink-deep), var(--pink-mid));
+    border-radius:50%;
+    opacity:0.6;
+    filter:blur(2px);
+    animation:splashBubble 3s ease-in-out infinite;
+  }
+  
+  .splash-1{width:120px;height:120px;top:20%;left:15%;animation-delay:0s}
+  .splash-2{width:90px;height:90px;top:60%;left:5%;animation-delay:0.5s}
+  .splash-3{width:100px;height:100px;top:40%;right:10%;animation-delay:1s}
+  .splash-4{width:70px;height:70px;bottom:20%;left:20%;animation-delay:1.5s}
+  .splash-5{width:85px;height:85px;top:15%;right:15%;animation-delay:2s}
+  
+  @keyframes splashBubble{
+    0%,100%{transform:scale(1) translateY(0);opacity:0.5}
+    50%{transform:scale(1.2) translateY(-10px);opacity:0.7}
+  }
+  
+  .bubble{
+    position:absolute;
+    background:linear-gradient(135deg, var(--pink-mid), var(--pink-soft));
+    border-radius:50%;
+    opacity:0.4;
+    animation:bubbleRise 4s ease-in-out infinite;
+  }
+  
+  .bubble-1{width:25px;height:25px;bottom:30%;left:25%;animation-delay:0s}
+  .bubble-2{width:20px;height:20px;bottom:40%;left:35%;animation-delay:0.8s}
+  .bubble-3{width:30px;height:30px;bottom:25%;right:30%;animation-delay:1.6s}
+  .bubble-4{width:18px;height:18px;bottom:50%;left:20%;animation-delay:2.4s}
+  .bubble-5{width:22px;height:22px;bottom:35%;right:25%;animation-delay:3.2s}
+  
+  @keyframes bubbleRise{
+    0%,100%{transform:translateY(0) scale(1);opacity:0.3}
+    50%{transform:translateY(-20px) scale(1.1);opacity:0.6}
+  }
+  
+  .splash-drop{
+    position:absolute;
+    background:var(--pink-deep);
+    border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+    opacity:0.7;
+    animation:dropSplash 2.5s ease-in-out infinite;
+  }
+  
+  .drop-1{width:15px;height:20px;top:35%;left:10%;animation-delay:0s}
+  .drop-2{width:12px;height:16px;top:50%;right:8%;animation-delay:0.7s}
+  .drop-3{width:10px;height:14px;bottom:30%;left:15%;animation-delay:1.4s}
+  
+  @keyframes dropSplash{
+    0%,100%{transform:scale(1) rotate(0deg);opacity:0.5}
+    50%{transform:scale(1.3) rotate(10deg);opacity:0.8}
+  }
+  
+  .polish-glow{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:320px;
+    height:420px;
+    background:radial-gradient(ellipse at center, 
+      rgba(214,62,111,0.3) 0%, 
+      rgba(242,155,171,0.2) 40%, 
+      transparent 70%);
+    border-radius:50%;
+    filter:blur(30px);
+    z-index:2;
+    animation:glowPulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes glowPulse{
+    0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.5}
+    50%{transform:translate(-50%,-50%) scale(1.1);opacity:0.7}
+  }
+  
+  /* Botella de esmalte - ahora contiene el pincel */
+  .polish-bottle{
+    position:relative;
+    width:100%;
+    height:100%;
+    transform-style:preserve-3d;
+    transition: transform 0.1s ease-out;
+    z-index:10;
+  }
+  
+  .bottle-cap{
+    position:absolute;
+    width:100px;
+    height:120px;
+    left:50%;
+    top:60px;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #0a0a0a 100%);
+    border-radius:15px 15px 10px 10px;
+    box-shadow:
+      0 10px 30px rgba(0,0,0,0.4),
+      inset 0 -5px 20px rgba(0,0,0,0.5),
+      inset 0 5px 20px rgba(255,255,255,0.15);
+    z-index:10;
+  }
+  
+  .bottle-cap::before{
+    content:'';
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:100%;
+    height:25px;
+    background:linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%);
+    border-radius:0 0 8px 8px;
+  }
+  
+  .bottle-neck{
+    position:absolute;
+    width:50px;
+    height:30px;
+    left:50%;
+    top:180px;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, var(--pink-deep) 0%, var(--pink-mid) 100%);
+    border-radius:8px;
+    box-shadow:inset 0 0 15px rgba(0,0,0,0.2);
+  }
+  
+  .bottle-body{
+    position:absolute;
+    width:160px;
+    height:260px;
+    left:50%;
+    top:210px;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, 
+      var(--pink-deep) 0%, 
+      var(--pink-mid) 40%,
+      var(--pink-deep) 100%);
+    border-radius:20px;
+    box-shadow:
+      inset 0 0 40px rgba(255,255,255,0.2),
+      inset 15px 0 40px rgba(255,255,255,0.15),
+      inset -15px 0 40px rgba(0,0,0,0.15),
+      0 25px 60px rgba(214,62,111,0.4),
+      0 0 0 2px rgba(255,255,255,0.2);
+    overflow:hidden;
+  }
+  
+  .bottle-body::before{
+    content:'';
+    position:absolute;
+    top:20px;
+    left:15px;
+    width:30px;
+    height:180px;
+    background:linear-gradient(180deg, 
+      rgba(255,255,255,0.4) 0%, 
+      rgba(255,255,255,0.1) 100%);
+    border-radius:12px;
+    filter:blur(3px);
+  }
+  
+  .bottle-body::after{
+    content:'';
+    position:absolute;
+    top:35px;
+    right:20px;
+    width:18px;
+    height:100px;
+    background:linear-gradient(180deg, 
+      rgba(255,255,255,0.3) 0%, 
+      transparent 100%);
+    border-radius:8px;
+  }
+  
+  .bottle-label{
+    position:absolute;
+    width:120px;
+    height:60px;
+    left:50%;
+    top:300px;
+    transform:translateX(-50%);
+    background:rgba(255,255,255,0.95);
+    border-radius:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .bottle-label h3{
+    font-family:'Playfair Display',serif;
+    font-size:1.2rem;
+    color:var(--pink-deep);
+    margin-bottom:3px;
+  }
+  
+  .bottle-label span{
+    font-size:0.65rem;
+    color:#6b4a5a;
+    text-transform:uppercase;
+    letter-spacing:2px;
+  }
+  
+  .bottle-base{
+    position:absolute;
+    width:140px;
+    height:25px;
+    left:50%;
+    top:470px;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, 
+      var(--pink-mid) 0%, 
+      var(--pink-deep) 100%);
+    border-radius:8px 8px 12px 12px;
+    box-shadow:0 10px 25px rgba(214,62,111,0.3);
+  }
+  
+  /* PINCEL DENTRO DE LA BOTELLA - se mueve con ella */
+  .brush{
+    position:absolute;
+    width:100px;
+    height:250px;
+    left:50%;
+    top:80px;
+    transform:translateX(-50%) rotate(-15deg);
+    transform-origin:top center;
+    z-index:20;
+  }
+  
+  .brush-handle{
+    position:absolute;
+    width:18px;
+    height:100px;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 50%, #0a0a0a 100%);
+    border-radius:6px 6px 3px 3px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.4);
+  }
+  
+  .brush-ferrule{
+    position:absolute;
+    width:24px;
+    height:30px;
+    top:95px;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg, #c0c0c0 0%, #808080 100%);
+    border-radius:3px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.3);
+  }
+  
+  .brush-bristles{
+    position:absolute;
+    width:30px;
+    height:80px;
+    top:120px;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, 
+      var(--pink-deep) 0%, 
+      var(--pink-mid) 50%,
+      var(--pink-deep) 100%);
+    border-radius:3px 3px 10px 10px;
+    box-shadow:0 5px 15px rgba(214,62,111,0.4);
+  }
+  
+  .brush-drip{
+    position:absolute;
+    width:16px;
+    height:30px;
+    top:195px;
+    left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, 
+      var(--pink-deep) 0%, 
+      var(--pink-mid) 100%);
+    border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow:0 5px 15px rgba(214,62,111,0.4);
+    animation:dripFall 3s ease-in-out infinite;
+  }
+  
+  @keyframes dripFall{
+    0%, 100%{
+      opacity:0;
+      transform:translateX(-50%) translateY(0) scaleY(0.5);
+    }
+    20%{opacity:1}
+    80%{transform:translateX(-50%) translateY(35px) scaleY(1.2)}
+    100%{opacity:0;transform:translateX(-50%) translateY(55px) scaleY(0.3)}
+  }
+  
+  .polish-puddle{
+    position:absolute;
+    width:180px;
+    height:50px;
+    left:50%;
+    bottom:70px;
+    transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, 
+      rgba(214,62,111,0.6) 0%, 
+      rgba(242,155,171,0.4) 50%, 
+      transparent 70%);
+    border-radius:50%;
+    filter:blur(8px);
+    animation:puddleMorph 5s ease-in-out infinite;
+  }
+  
+  @keyframes puddleMorph{
+    0%,100%{transform:translateX(-50%) scale(1);opacity:0.6}
+    50%{transform:translateX(-50%) scale(1.1, 0.9);opacity:0.8}
+  }
+  
+  .falling-drop{
+    position:absolute;
+    width:10px;
+    height:15px;
+    background:linear-gradient(180deg, var(--pink-deep) 0%, var(--pink-mid) 100%);
+    border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow:0 3px 10px rgba(214,62,111,0.4);
+    animation:dropFall 2.5s ease-in-out infinite;
+  }
+  
+  .drop-1{left:170px;top:340px;animation-delay:0s}
+  .drop-2{left:220px;top:360px;animation-delay:0.8s}
+  .drop-3{left:195px;top:380px;animation-delay:1.6s}
+  
+  @keyframes dropFall{
+    0%, 100%{opacity:0;transform:translateY(0) scale(0.8)}
+    30%{opacity:1}
+    100%{opacity:0;transform:translateY(70px) scale(1)}
+  }
+  
+  @keyframes polishFloat{
+    0%,100%{transform:translate(-50%,-50%) translateY(0) rotateY(0deg)}
+    50%{transform:translate(-50%,-50%) translateY(-10px) rotateY(2deg)}
+  }
+
+  .particles{position:absolute;inset:0;pointer-events:none}
+  .particle{
+    position:absolute;border-radius:50%;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    opacity:.4;animation:particleFloat linear infinite;
+  }
+  @keyframes particleFloat{
+    0%{transform:translateY(100vh) scale(0);opacity:0}
+    10%{opacity:.6}
+    90%{opacity:.6}
+    100%{transform:translateY(-100px) scale(1);opacity:0}
+  }
+
+  section{padding:120px 60px;position:relative}
+  
+  .section-header{
+    text-align:center;
+    max-width:900px;
+    margin:0 auto 80px;
+  }
+  
+  .section-header .tag{
+    display:inline-block;
+    padding:6px 18px;
+    background:var(--pink-soft);
+    color:var(--pink-deep);
+    border-radius:20px;
+    font-size:.8rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:20px;
+  }
+  
+  .section-header h2{
+    font-size:4rem;
+    margin-bottom:20px;
+    color:var(--dark);
+    animation: titleSlideIn 1s ease-out;
+    transition: transform 0.3s ease;
+  }
+  
+  .section-header h2:hover{transform: scale(1.05)}
+  
+  .section-header h2 span{
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    display: inline-block;
+    animation: titleGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes titleSlideIn{
+    0%{opacity: 0;transform: translateY(-30px)}
+    100%{opacity: 1;transform: translateY(0)}
+  }
+  
+  @keyframes titleGlow{
+    0%, 100%{filter: brightness(1)}
+    50%{filter: brightness(1.2)}
+  }
+  
+  .section-header p{color:#6b4a5a;font-size:1.1rem}
+
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:30px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .service-card{
+    padding:40px 30px;
+    background:rgba(255,255,255,.7);
+    border-radius:25px;
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 20px 50px rgba(214,62,111,.08);
+    transition:all .5s cubic-bezier(.23,1,.32,1);
+    transform-style:preserve-3d;
+    position:relative;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .service-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:4px;
+    background:linear-gradient(90deg,var(--pink-deep),var(--pink-mid));
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .5s;
+  }
+  .service-card:hover::before{transform:scaleX(1)}
+  .service-card:hover{
+    transform:translateY(-15px) rotateX(5deg);
+    box-shadow:0 40px 80px rgba(214,62,111,.2);
+  }
+  .service-icon{
+    width:70px;height:70px;
+    border-radius:20px;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    display:flex;align-items:center;justify-content:center;
+    font-size:2rem;color:white;margin-bottom:25px;
+    box-shadow:0 15px 30px rgba(214,62,111,.3);
+    transition:transform .5s;
+  }
+  .service-card:hover .service-icon{transform:rotateY(360deg) scale(1.1)}
+  .service-card h3{font-size:1.5rem;margin-bottom:15px;color:var(--dark)}
+  .service-card p{color:#6b4a5a;font-size:.95rem;margin-bottom:20px}
+  .service-link{
+    color:var(--pink-deep);font-weight:600;text-decoration:none;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:gap .3s;
+  }
+  .service-link:hover{gap:15px}
+
+  .features{
+    background:linear-gradient(135deg,var(--pink-deep),#e85a8a);
+    border-radius:40px;
+    margin:0 40px;
+    padding:100px 60px;
+    position:relative;
+    overflow:hidden;
+  }
+  .features::before{
+    content:'';
+    position:absolute;
+    top:-50%;right:-10%;
+    width:500px;height:500px;
+    background:radial-gradient(circle,rgba(255,255,255,.2),transparent);
+    border-radius:50%;
+  }
+  .features-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:40px;
+    max-width:1200px;
+    margin:0 auto;
+    position:relative;
+    z-index:2;
+  }
+  .feature-item{text-align:center;color:white;transition:transform .4s}
+  .feature-item:hover{transform:translateY(-10px)}
+  .feature-num{
+    font-family:'Playfair Display',serif;
+    font-size:4rem;font-weight:900;
+    background:linear-gradient(180deg,white,rgba(255,255,255,.5));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:10px;
+  }
+  .feature-item h3{font-size:1.3rem;margin-bottom:10px}
+  .feature-item p{opacity:.9;font-size:.95rem}
+
+  .showcase{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:80px;
+    align-items:center;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .showcase-visual{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    perspective:1500px;
+}
+
+.showcase-image{
+    width:100%;
+    max-width:520px;
+    height:auto;
+    display:block;
+    border-radius:30px;
+    box-shadow:0 40px 80px rgba(214,62,111,.25);
+    transition:transform .5s ease;
+    transform-style:preserve-3d;
+    animation:showcaseFloat 4s ease-in-out infinite;
+}
+
+@keyframes showcaseFloat{
+    0%,100%{
+        transform:rotateY(0deg) translateY(0);
+    }
+    50%{
+        transform:rotateY(-6deg) translateY(-12px);
+    }
+}
+
+.showcase-image:hover{
+    transform:rotateY(-12deg) rotateX(8deg) scale(1.03);
+}
+  .showcase-content h2{font-size:3rem;margin-bottom:25px;color:var(--dark)}
+  .showcase-content h2 span{
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .feature-list{list-style:none;margin:30px 0}
+  .feature-list li{
+    display:flex;align-items:center;gap:15px;
+    padding:15px 0;border-bottom:1px solid var(--pink-soft);
+    font-size:1rem;
+  }
+  .feature-list li::before{
+    content:'✓';
+    width:30px;height:30px;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:bold;flex-shrink:0;
+    box-shadow:0 5px 15px rgba(214,62,111,.3);
+  }
+
+  .testimonials-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:30px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .testimonial{
+    padding:35px;
+    background:rgba(255,255,255,.8);
+    border-radius:25px;
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 20px 50px rgba(214,62,111,.08);
+    transition:all .4s;
+    position:relative;
+    animation:testimonialFloat 5s ease-in-out infinite;
+  }
+  
+  .testimonial:nth-child(1){animation-delay:0s}
+  .testimonial:nth-child(2){animation-delay:1.5s}
+  .testimonial:nth-child(3){animation-delay:3s}
+  
+  @keyframes testimonialFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-10px)}
+  }
+  
+  .testimonial:hover{
+    transform:translateY(-15px);
+    box-shadow:0 30px 60px rgba(214,62,111,.15);
+  }
+  .testimonial::before{
+    content:'"';
+    position:absolute;top:10px;right:25px;
+    font-family:'Playfair Display',serif;
+    font-size:6rem;color:var(--pink-soft);
+    opacity:.5;line-height:1;
+  }
+  .testimonial-text{font-style:italic;color:#4a2a3a;margin-bottom:25px;font-size:.95rem}
+  .testimonial-author{display:flex;align-items:center;gap:15px}
+  .author-avatar{
+    width:50px;height:50px;border-radius:50%;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-weight:bold;font-size:1.2rem;
+    box-shadow:0 10px 20px rgba(214,62,111,.3);
+  }
+  .author-info strong{display:block;color:var(--dark)}
+  .author-info span{font-size:.85rem;color:#8a6a7a}
+  .stars{color:var(--pink-deep);margin-bottom:15px;font-size:1.1rem}
+
+  .contact-wrapper{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:40px;
+    max-width:1200px;
+    margin:0 auto;
+    align-items:start;
+  }
+  .contact-form-card{
+    background:rgba(255,255,255,.85);
+    backdrop-filter:blur(20px);
+    border-radius:30px;
+    padding:50px;
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 30px 80px rgba(214,62,111,.12);
+    transform-style:preserve-3d;
+    transition:transform .5s;
+  }
+  .contact-form-card:hover{transform:translateY(-5px) rotateX(2deg)}
+  .contact-form-card h3{font-size:2rem;margin-bottom:10px;color:var(--dark)}
+  .form-subtitle{color:#6b4a5a;margin-bottom:30px;font-size:.95rem}
+
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .form-group{margin-bottom:20px}
+  .form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--dark);margin-bottom:8px}
+  .form-group input,
+  .form-group select,
+  .form-group textarea{
+    width:100%;
+    padding:14px 18px;
+    background:rgba(242,233,235,.5);
+    border:2px solid var(--pink-soft);
+    border-radius:14px;
+    font-family:'Poppins',sans-serif;
+    font-size:.95rem;
+    color:var(--dark);
+    transition:all .3s;
+    outline:none;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus{
+    border-color:var(--pink-deep);
+    background:white;
+    box-shadow:0 0 0 4px rgba(214,62,111,.1);
+    transform:translateY(-2px);
+  }
+  .form-group textarea{resize:vertical;min-height:100px}
+  .form-note{text-align:center;font-size:.8rem;color:#8a6a7a;margin-top:15px}
+
+  .contact-info{display:flex;flex-direction:column;gap:20px}
+  .info-card{
+    background:rgba(255,255,255,.85);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.8);
+    border-radius:20px;
+    padding:22px 25px;
+    display:flex;align-items:center;gap:18px;
+    box-shadow:0 15px 40px rgba(214,62,111,.08);
+    transition:all .4s;
+    cursor:pointer;
+  }
+  .info-card:hover{
+    transform:translateX(10px) scale(1.02);
+    box-shadow:0 25px 50px rgba(214,62,111,.15);
+    border-color:var(--pink-mid);
+  }
+  .info-icon{
+    width:50px;height:50px;
+    background:linear-gradient(135deg,var(--pink-deep),var(--pink-mid));
+    border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.4rem;
+    box-shadow:0 10px 25px rgba(214,62,111,.3);
+    flex-shrink:0;
+  }
+  .info-card strong{display:block;font-size:.8rem;color:#8a6a7a;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+  .info-card span{color:var(--dark);font-weight:600;font-size:1rem}
+
+  .contact-social{
+    background:linear-gradient(135deg,var(--pink-deep),#e85a8a);
+    border-radius:20px;
+    padding:25px;
+    color:white;
+  }
+  .contact-social h4{margin-bottom:15px;font-family:'Poppins',sans-serif;font-size:1rem;font-weight:600}
+  .social-icons{display:flex;gap:12px}
+  .social-btn{
+    width:48px;height:48px;
+    background:rgba(255,255,255,.2);
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    color:white;text-decoration:none;font-size:1.4rem;
+    transition:all .3s;backdrop-filter:blur(10px);
+  }
+  .social-btn:hover{
+    background:white;color:var(--pink-deep);
+    transform:translateY(-5px) scale(1.1);
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+  }
+
+  .response-badge{
+    background:rgba(255,255,255,.85);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.8);
+    border-radius:20px;
+    padding:20px 25px;
+    display:flex;align-items:center;gap:15px;
+  }
+  .pulse-dot{
+    width:12px;height:12px;
+    background:#4ade80;border-radius:50%;
+    position:relative;flex-shrink:0;
+  }
+  .pulse-dot::before{
+    content:'';position:absolute;inset:-4px;
+    background:#4ade80;border-radius:50%;
+    opacity:.4;animation:pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%,100%{transform:scale(1);opacity:.4}
+    50%{transform:scale(1.8);opacity:0}
+  }
+  .response-badge strong{display:block;font-size:.9rem;color:var(--dark)}
+  .response-badge span{font-size:.8rem;color:#8a6a7a}
+
+  .main-footer{
+    background:linear-gradient(180deg,var(--pink-pale) 0%,#e8d5dd 100%);
+    margin-top:80px;
+    padding:0 60px 0;
+    position:relative;
+    overflow:hidden;
+  }
+  .main-footer::before{
+    content:'';position:absolute;
+    top:-200px;right:-200px;
+    width:500px;height:500px;
+    background:radial-gradient(circle,var(--pink-soft),transparent 70%);
+    opacity:.5;border-radius:50%;
+  }
+  .footer-top{padding:80px 0 60px;border-bottom:1px solid rgba(214,62,111,.1)}
+  .footer-newsletter{max-width:700px;margin:0 auto;text-align:center}
+  .footer-newsletter h3{font-size:2.2rem;margin-bottom:15px;color:var(--dark)}
+  .footer-newsletter p{color:#6b4a5a;margin-bottom:30px;font-size:1.05rem}
+  .newsletter-form{display:flex;gap:10px;max-width:500px;margin:0 auto 20px}
+  .newsletter-form input{
+    flex:1;padding:16px 22px;
+    border:2px solid var(--pink-soft);border-radius:50px;
+    font-family:'Poppins',sans-serif;font-size:.95rem;
+    background:white;outline:none;transition:all .3s;
+  }
+  .newsletter-form input:focus{border-color:var(--pink-deep);box-shadow:0 0 0 4px rgba(214,62,111,.1)}
+  .newsletter-form button{
+    padding:16px 30px;
+    background:linear-gradient(135deg,var(--pink-deep),#e85a8a);
+    color:white;border:none;border-radius:50px;
+    font-family:'Poppins',sans-serif;font-weight:600;
+    cursor:pointer;box-shadow:0 10px 30px rgba(214,62,111,.35);
+    transition:all .3s;white-space:nowrap;
+  }
+  .newsletter-form button:hover{transform:translateY(-3px);box-shadow:0 15px 40px rgba(214,62,111,.5)}
+  .newsletter-badges{display:flex;justify-content:center;gap:25px;font-size:.85rem;color:#8a6a7a;flex-wrap:wrap}
+
+  .footer-main{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1.2fr;gap:40px;padding:60px 0 40px}
+  .footer-col h4{font-family:'Poppins',sans-serif;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:20px;text-transform:uppercase;letter-spacing:.5px}
+  .footer-col ul{list-style:none}
+  .footer-col ul li{margin-bottom:12px}
+  .footer-col ul li a{color:#6b4a5a;text-decoration:none;font-size:.92rem;transition:all .3s;display:inline-block}
+  .footer-col ul li a:hover{color:var(--pink-deep);transform:translateX(5px)}
+  .footer-col.contact-list li{color:#6b4a5a;font-size:.92rem;margin-bottom:12px}
+  .footer-desc{color:#6b4a5a;font-size:.92rem;line-height:1.7;margin-bottom:20px;max-width:280px}
+  .trust-badges{display:flex;gap:10px;flex-wrap:wrap}
+  .badge-item{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 12px;background:rgba(255,255,255,.7);
+    border-radius:20px;font-size:.75rem;color:var(--dark);
+    font-weight:500;border:1px solid var(--pink-soft);
+  }
+  .footer-social{display:flex;gap:10px;margin-top:20px}
+  .footer-social a{
+    width:40px;height:40px;
+    background:var(--pink-soft);color:var(--pink-deep);
+    border-radius:12px;display:flex;align-items:center;justify-content:center;
+    text-decoration:none;font-weight:700;font-size:.9rem;
+    transition:all .3s;
+  }
+  .footer-social a:hover{
+    background:var(--pink-deep);color:white;
+    transform:translateY(-3px);box-shadow:0 10px 20px rgba(214,62,111,.3);
+  }
+  .footer-payments{
+    display:flex;align-items:center;gap:15px;
+    padding:25px 0;
+    border-top:1px solid rgba(214,62,111,.1);
+    border-bottom:1px solid rgba(214,62,111,.1);
+    flex-wrap:wrap;
+  }
+  .footer-payments span:first-child{color:#6b4a5a;font-size:.9rem;font-weight:500}
+  .payment-icons{display:flex;gap:10px;flex-wrap:wrap}
+  .pay-icon{
+    padding:8px 14px;background:white;border-radius:8px;
+    font-size:.75rem;font-weight:700;color:var(--dark);
+    border:1px solid var(--pink-soft);box-shadow:0 2px 8px rgba(214,62,111,.05);
+  }
+  .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding:30px 0;flex-wrap:wrap;gap:15px}
+  .footer-bottom-left p{color:#8a6a7a;font-size:.85rem}
+  .footer-bottom-right{display:flex;gap:25px}
+  .footer-bottom-right a{color:#8a6a7a;text-decoration:none;font-size:.85rem;transition:color .3s}
+  .footer-bottom-right a:hover{color:var(--pink-deep)}
+
+  .reveal{opacity:0;transform:translateY(50px);transition:all 1s cubic-bezier(.23,1,.32,1)}
+  .reveal.active{opacity:1;transform:translateY(0)}
+
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+  @media(max-width:900px){
+    nav{padding:15px 25px}
+    .nav-links{display:none}
+    .hero{grid-template-columns:1fr;padding:120px 25px 60px}
+    .hero h1{font-size:2.8rem}
+    .hero-visual{height:500px}
+    .polish-3d{width:320px;height:450px}
+    .polish-splash{width:300px;height:380px}
+    .bottle-body{width:130px;height:210px}
+    .bottle-cap{width:80px;height:100px}
+    .brush{width:80px;height:200px}
+    .section-header h2{font-size:2.8rem}
+    section{padding:80px 25px}
+    .features{margin:0 20px;padding:60px 30px}
+    .showcase{
+        grid-template-columns:1fr;
+        gap:40px;
+        text-align:center;
+    }
+
+    .showcase-visual{
+        perspective:1000px;
+    }
+
+    .showcase-image{
+        width:100%;
+        max-width:420px;
+        margin:auto;
+    }
+
+    .showcase-content h2{
+        font-size:2.5rem;
+    }
+
+}
+  
+  @media(max-width:768px){
+    .section-header h2{font-size:2.2rem}
+    .hero h1{font-size:2.2rem}
+    .contact-wrapper{grid-template-columns:1fr}
+    .footer-main{grid-template-columns:1fr; gap:40px}
+     .main-footer{
+        padding:0 20px;
+    }
+
+    .newsletter-form{
+        flex-direction:column;
+    }
+
+    .newsletter-form input,
+    .newsletter-form button{
+        width:100%;
+    }
+
+    .footer-main{
+        grid-template-columns:1fr;
+        text-align:center;
+        gap:35px;
+    }
+
+    .footer-social,
+    .payment-icons,
+    .newsletter-badges,
+    .trust-badges{
+        justify-content:center;
+    }
+
+    .footer-bottom{
+        flex-direction:column;
+        text-align:center;
+    }
+
+    .contact-list li{
+        overflow-wrap:anywhere;
+    }
+
+    .footer-col{
+    width:100%;
+    min-width:0;
+}
+
+.footer-desc{
+    max-width:100%;
+    margin:0 auto 20px;
+}
+
+.contact-list{
+    padding:0;
+}
+
+.contact-list li{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    text-align:center;
+    overflow-wrap:anywhere;
+}
+
+.logo{
+    display:block;
+    text-align:center;
+    font-size:2rem;
+}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <div class="blob"></div>
+  <div class="blob"></div>
+  <div class="blob"></div>
+</div>
+
+<div class="particles" id="particles"></div>
+
+<nav id="navbar">
+  <div class="logo">Spa Deseo</div>
+  <ul class="nav-links">
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#caracteristicas">Características</a></li>
+    <li><a href="#testimonios">Testimonios</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <button class="btn-nav">Agendar Cita</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>¿Un evento especial? <span>Luce tus uñas perfectas aquí</span></h1>
+    <p>Reserva tu cita y deja que nuestras expertas realcen tu belleza con los mejores tratamientos de uñas en Bello, Antioquia.</p>
+    <div class="hero-buttons">
+      <button class="btn-primary">Agendar ahora</button>
+      <button class="btn-secondary">Ver servicios</button>
+    </div>
+  </div>
+
+  <div class="hero-visual" id="heroVisual">
+    <div class="hero-3d-container" id="hero3d">
+      <div class="polish-3d" id="polish3d">
+        
+        <div class="polish-splash">
+          <div class="splash splash-1"></div>
+          <div class="splash splash-2"></div>
+          <div class="splash splash-3"></div>
+          <div class="splash splash-4"></div>
+          <div class="splash splash-5"></div>
+          <div class="bubble bubble-1"></div>
+          <div class="bubble bubble-2"></div>
+          <div class="bubble bubble-3"></div>
+          <div class="bubble bubble-4"></div>
+          <div class="bubble bubble-5"></div>
+          <div class="splash-drop drop-1"></div>
+          <div class="splash-drop drop-2"></div>
+          <div class="splash-drop drop-3"></div>
+        </div>
+        
+        <div class="polish-glow"></div>
+        
+        <div class="polish-bottle" id="polishBottle">
+          <div class="bottle-cap"></div>
+          <div class="bottle-neck"></div>
+          <div class="bottle-body"></div>
+          <div class="bottle-label">
+            <h3>Spa Deseo</h3>
+            <span>Rosa Pink</span>
+          </div>
+          <div class="bottle-base"></div>
+          
+          <!-- Pincel DENTRO de la botella - se mueve con ella -->
+          <div class="brush">
+            <div class="brush-handle"></div>
+            <div class="brush-ferrule"></div>
+            <div class="brush-bristles"></div>
+            <div class="brush-drip"></div>
+          </div>
+        </div>
+        
+        <div class="falling-drop drop-1"></div>
+        <div class="falling-drop drop-2"></div>
+        <div class="falling-drop drop-3"></div>
+        
+        <div class="polish-puddle"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="servicios">
+  <div class="section-header reveal">
+    <span class="tag">Servicios</span>
+    <h2>Todo lo que tu <span>spa</span> necesita</h2>
+    <p>Herramientas profesionales pensadas para spas y salones de belleza</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-calendar-check"></i></div>
+      <h3>Agenda Inteligente</h3>
+      <p>Organiza tus citas automáticamente, evita conflictos de horario y recibe recordatorios en tiempo real.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-credit-card"></i></div>
+      <h3>Pagos Integrados</h3>
+      <p>Cobra depósitos y pagos completos directamente desde la plataforma. Acepta todas las tarjetas.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-mobile-alt"></i></div>
+      <h3>App para Clientas</h3>
+      <p>Tus clientas agendan desde su celular, eligen servicio, hora y terapeuta favorita en segundos.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-chart-line"></i></div>
+      <h3>Reportes y Métricas</h3>
+      <p>Conoce tus ingresos, servicios más populares y comportamiento de tus clientas con dashboards visuales.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-bell"></i></div>
+      <h3>Recordatorios Auto</h3>
+      <p>WhatsApp, email y SMS automáticos para reducir ausencias hasta en un 80%.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon"><i class="fas fa-images"></i></div>
+      <h3>Catálogo Visual</h3>
+      <p>Muestra tu portafolio de servicios, tratamientos y estilos para que tus clientas se inspiren antes de agendar.</p>
+      <a href="#" class="service-link">Saber más →</a>
+    </div>
+  </div>
+</section>
+
+<section id="caracteristicas" style="padding:80px 0">
+  <div class="features reveal">
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-num">#1</div>
+        <h3>Confiabilidad</h3>
+        <p>Agendamiento preciso y sin duplicidad de citas</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">#2</div>
+        <h3>Seguridad</h3>
+        <p>Ofrece una interfaz intuitiva, sencilla y fácil de usar</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">#3</div>
+        <h3>Orientación al Usuario</h3>
+        <p>Diseñado para satisfacer las necesidades tanto de los clientes como del administrador</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">#4</div>
+        <h3>Escalabilidad</h3>
+        <p>Permite agregar nuevas funcionalidades y servicios sin afectar su funcionamiento</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="showcase">
+    <div class="showcase-visual reveal">
+      <img class="showcase-image" src="https://images.unsplash.com/photo-1643648854897-7b5845b4c04c?q=80&w=664&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Uñas rosas">
+    </div>
+    <div class="showcase-content reveal">
+      <h2>Diseñado para <span>spas</span> que brillan</h2>
+      <p style="color:#6b4a5a;font-size:1.05rem;margin-bottom:20px">Cada detalle pensado para que te enfoques en lo que mejor sabes hacer: brindar bienestar.</p>
+      <ul class="feature-list">
+        <li>Agenda visual con vista diaria, semanal y mensual</li>
+        <li>Perfil personalizable con tu marca y colores</li>
+        <li>Historial completo de cada clienta</li>
+        <li>Integración con Instagram y TikTok</li>
+        <li>Soporte en español 24/7</li>
+      </ul>
+      <button class="btn-primary">Empezar ahora →</button>
+    </div>
+  </div>
+</section>
+
+<section id="testimonios">
+  <div class="section-header reveal">
+    <span class="tag">Testimonios</span>
+    <h2>Lo que dicen nuestros <span>clientes</span></h2>
+    <p>Miles de profesionales ya transformaron su negocio con Spa Deseo</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">Desde que uso Spa Deseo mis ausencias bajaron al mínimo. Las clientas aman poder agendar solas a cualquier hora.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">V</div>
+        <div class="author-info"><strong>Valentina R.</strong><span>Spa Wellness</span></div>
+      </div>
+    </div>
+    <div class="testimonial reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">La interfaz es hermosa y súper fácil. En 10 minutos tenía mi agenda lista. Mis clientas me felicitan por la organización.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">C</div>
+        <div class="author-info"><strong>Camila S.</strong><span>Spa Relax</span></div>
+      </div>
+    </div>
+    <div class="testimonial reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">Los reportes me ayudaron a identificar mis servicios más rentables. Ahora gano 40% más que antes. ¡Totalmente recomendado!</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">L</div>
+        <div class="author-info"><strong>Laura M.</strong><span>Luxe Spa</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" style="padding-bottom:0">
+  <div class="section-header reveal">
+    <span class="tag">Contacto</span>
+    <h2>Hablemos de tu <span>spa</span></h2>
+    <p>¿Tienes dudas? ¿Quieres una demo personalizada? Escríbenos y te respondemos en menos de 2 horas</p>
+  </div>
+
+  <div class="contact-wrapper reveal">
+    <div class="contact-form-card">
+      <h3>Envíanos un mensaje</h3>
+      <p class="form-subtitle">Completa el formulario y te contactaremos pronto</p>
+      
+      <form class="contact-form" id="contactForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" placeholder="Tu nombre" required>
+          </div>
+          <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" placeholder="Tu apellido">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="hola@tuspa.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Teléfono / WhatsApp</label>
+          <input type="tel" placeholder="+57 300 123 4567">
+        </div>
+        
+        <div class="form-group">
+          <label>¿Qué servicio te interesa?</label>
+          <select required>
+            <option value="">Selecciona una opción</option>
+            <option>Agendamiento de citas</option>
+            <option>Pagos integrados</option>
+            <option>App para clientas</option>
+            <option>Plan completo</option>
+            <option>Solo quiero una demo</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Mensaje</label>
+          <textarea rows="4" placeholder="Cuéntanos sobre tu spa..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+          Enviar mensaje
+        </button>
+        
+        <p class="form-note"> Tu información está segura. No hacemos spam.</p>
+      </form>
+    </div>
+
+    <div class="contact-info">
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-envelope"></i></div>
+        <div>
+          <strong>Email</strong>
+          <span>hola@spadeseo.com</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-icon"><i class="fab fa-whatsapp"></i></div>
+        <div>
+          <strong>WhatsApp</strong>
+          <span>+57 300 123 4567</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <div>
+          <strong>Ubicación</strong>
+          <span>Bello, Antioquia - Colombia</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-clock"></i></div>
+        <div>
+          <strong>Horario</strong>
+          <span>Lun-Vie: 9am - 7pm</span>
+        </div>
+      </div>
+
+      <div class="contact-social">
+        <h4>Síguenos</h4>
+        <div class="social-icons">
+          <a href="#" class="social-btn" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="social-btn" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" class="social-btn" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="social-btn" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+
+      <div class="response-badge">
+        <div class="pulse-dot"></div>
+        <div>
+          <strong>Respondemos en &lt; 2 horas</strong>
+          <span>En días hábiles</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="main-footer">
+  <div class="footer-top">
+    <div class="footer-newsletter">
+      <h3>Únete a la comunidad Spa Deseo</h3>
+      <p>Recibe tips, tendencias y ofertas exclusivas para spas</p>
+      <form class="newsletter-form">
+        <input type="email" placeholder="tu@email.com" required>
+        <button type="submit">Suscribirme</button>
+      </form>
+      <div class="newsletter-badges">
+        <span>✓ Sin spam</span>
+        <span>✓ Cancela cuando quieras</span>
+        <span>✓ Tips exclusivos</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-main">
+    <div class="footer-col brand-col">
+      <div class="logo" style="margin-bottom:20px">Spa Deseo</div>
+      <p class="footer-desc">
+        El sistema de agendamiento #1 para spas. Gestiona tu negocio con elegancia y eficiencia.
+      </p>
+      <div class="trust-badges">
+        <div class="badge-item">
+          <i class="fas fa-lock"></i>
+          <span>SSL Seguro</span>
+        </div>
+        <div class="badge-item">
+          <i class="fas fa-check"></i>
+          <span>GDPR Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <h4>Producto</h4>
+      <ul>
+        <li><a href="#">Agendamiento</a></li>
+        <li><a href="#">Pagos</a></li>
+        <li><a href="#">App clientas</a></li>
+        <li><a href="#">Reportes</a></li>
+        <li><a href="#">Catálogo</a></li>
+        <li><a href="#">Precios</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <ul>
+        <li><a href="#">Sobre nosotros</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Carreras</a></li>
+        <li><a href="#">Prensa</a></li>
+        <li><a href="#">Partners</a></li>
+        <li><a href="#">Contacto</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Recursos</h4>
+      <ul>
+        <li><a href="#">Centro de ayuda</a></li>
+        <li><a href="#">Tutoriales</a></li>
+        <li><a href="#">Comunidad</a></li>
+        <li><a href="#">API Docs</a></li>
+        <li><a href="#">Status</a></li>
+        <li><a href="#">Afiliados</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <ul class="contact-list">
+        <li><i class="fas fa-envelope"></i> hola@spadeseo.com</li>
+        <li><i class="fab fa-whatsapp"></i> +57 300 123 4567</li>
+        <li><i class="fas fa-map-marker-alt"></i> Bello, Antioquia - Colombia</li>
+        <li><i class="fas fa-clock"></i> Lun-Sáb 7am-7pm</li>
+      </ul>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-payments">
+    <span>Aceptamos:</span>
+    <div class="payment-icons">
+      <span class="pay-icon">VISA</span>
+      <span class="pay-icon">MC</span>
+      <span class="pay-icon">AMEX</span>
+      <span class="pay-icon">PP</span>
+      <span class="pay-icon">OXXO</span>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-left">
+      <p>© 2026 Spa Deseo. Hecho con HTML en Bello, Antioquia.</p>
+    </div>
+    <div class="footer-bottom-right">
+      <a href="#">Términos</a>
+      <a href="#">Privacidad</a>
+      <a href="#">Cookies</a>
+      <a href="#">Aviso legal</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const heroVisual = document.getElementById('heroVisual');
+  const hero3d = document.getElementById('hero3d');
+  const polishBottle = document.getElementById('polishBottle');
+  
+  heroVisual.addEventListener('mousemove', (e) => {
+    const rect = heroVisual.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    
+    hero3d.style.transform = `rotateY(${x * 25}deg) rotateX(${-y * 25}deg)`;
+    
+    if(polishBottle){
+      polishBottle.style.transform = `rotateY(${x * 40}deg) rotateX(${-y * 40}deg) translateZ(40px)`;
+    }
+  });
+  
+  heroVisual.addEventListener('mouseleave', () => {
+    hero3d.style.transform = 'rotateY(0) rotateX(0)';
+    if(polishBottle){
+      polishBottle.style.transform = '';
+    }
+  });
+
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `translateY(-15px) rotateY(${x * 15}deg) rotateX(${-y * 15}deg)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('active');
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 8 + 4;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    particlesContainer.appendChild(p);
+  }
+
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const polish = document.querySelector('.polish-3d');
+    if (polish) {
+      polish.style.transform = `translate(-50%, calc(-50% + ${scrolled * 0.15}px))`;
+    }
+  });
+
+  const contactForm = document.getElementById('contactForm');
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = contactForm.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      
+      btn.innerHTML = 'Enviando... ';
+      btn.style.opacity = '.7';
+      btn.disabled = true;
+      
+      setTimeout(() => {
+        btn.innerHTML = '¡Mensaje enviado! ✓';
+        btn.style.background = 'linear-gradient(135deg,#4ade80,#22c55e)';
+        btn.style.opacity = '1';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = '';
+          btn.disabled = false;
+          contactForm.reset();
+        }, 2500);
+      }, 1500);
+    });
+  }
+
+  const newsletterForm = document.querySelector('.newsletter-form');
+  if (newsletterForm) {
+    newsletterForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = newsletterForm.querySelector('button');
+      const originalText = btn.textContent;
+      
+      btn.textContent = '¡Suscrito! ✓';
+      btn.style.background = 'linear-gradient(135deg,#4ade80,#22c55e)';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+        newsletterForm.reset();
+      }, 2500);
+    });
+  }
+</script>
+</body>
+</html>
